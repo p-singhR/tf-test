@@ -1,40 +1,47 @@
-image:
-   name: hashicorp/terraform:light
-   entrypoint:
-     - '/usr/bin/env'
-     - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+steps:
+- id: 'branch name'
+  name: 'alpine'
+  entrypoint: 'sh'  
+  args: 
+  - '-c'
+  - | 
+      echo "***********************"
+      echo "$BRANCH_NAME"
+      echo "***********************"
 
-before_script:
-     -  rm -rf .terraform
-     -  terraform --version
-     -  mkdir -p ./creds
-     -  echo $SERVICEACCOUNT | base64 -d > ./creds/serviceaccount.json
-     -  terraform init
+ 
 
-stages:
-      - validate
-      - plan
-      - apply
+- id: 'tf init'
+  name: 'hashicorp/terraform:1.0.0'
+  entrypoint: 'sh'
+  args: 
+  - '-c'
+  - |
+      cd Template/
+      terraform init
 
-validate:
-   stage: validate
-   script:
-     - terraform validate
+ 
 
-plan:
-   stage: plan
-   script:
-     - terraform plan -out "planfile"
-   dependencies:
-     - validate
-   artifacts:
-     paths:
-       - planfile
+# [START tf-plan]
+- id: 'tf plan'
+  name: 'hashicorp/terraform:1.0.0'
+  entrypoint: 'sh'
+  args: 
+  - '-c'
+  - | 
+      cd Template/
+      terraform plan
+# [END tf-plan]
 
-apply:
-   stage: apply
-   script:
-     - terraform apply -input=false "planfile"
-   dependencies:
-     - plan
-   when: manual
+ 
+
+# [START tf-apply]
+- id: 'tf apply'
+  name: 'hashicorp/terraform:1.0.0'
+  entrypoint: 'sh'
+  args: 
+  - '-c'
+  - | 
+      cd Template/
+      terraform apply --auto-approve
+# [END tf-apply]
